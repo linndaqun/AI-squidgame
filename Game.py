@@ -3,8 +3,7 @@ from Grid import Grid
 from ComputerAI import ComputerAI
 from Displayer import Displayer
 from PlayerAI import PlayerAI
-from test_players.EasyAI import EasyAI
-from test_players.opponent_heuristics import Opponent_heuristics
+from test_players.opponent_minimax import Opponent_minimax
 from Utils import *
 import time
 
@@ -230,7 +229,7 @@ class Game():
 def main():
 
     playerAI = PlayerAI() # change this to PlayerAI() to test your player!
-    computerAI = Opponent_heuristics() # change this to a more sophisticated player you've coded
+    computerAI = Opponent_minimax() # change this to a more sophisticated player you've coded
     displayer = Displayer()
     game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
     

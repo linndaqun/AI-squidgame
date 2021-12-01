@@ -13,7 +13,7 @@ DEPTH_LIMIT = 5
 
 # TO BE IMPLEMENTED
 # 
-class PlayerAI(BaseAI):
+class Opponent_minimax(BaseAI):
 
     def __init__(self) -> None:
         # You may choose to add attributes to your player - up to you!
