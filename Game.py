@@ -7,7 +7,7 @@ from test_players.EasyAI import EasyAI
 from Utils import *
 import time
 
-from test_players.MediumAI import MediumAI
+# from test_players.MediumAI import MediumAI
 
 PLAYER_TURN, COMPUTER_TURN = 1,2
 
@@ -186,7 +186,7 @@ class Game():
 
                 else: 
                     self.over = True
-                    print(f"Tried to put trap in {intended_trap}")
+                    print(f"Tried to put trap in {intended_trap}") ## change trap to intended_trap
                     print("Invalid trap!")
 
             else:
