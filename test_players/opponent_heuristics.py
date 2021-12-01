@@ -10,7 +10,7 @@ from Displayer import Displayer
 
 # TO BE IMPLEMENTED
 # 
-class PlayerAI(BaseAI):
+class Opponent_heuristics(BaseAI):
 
     def __init__(self) -> None:
         # You may choose to add attributes to your player - up to you!
