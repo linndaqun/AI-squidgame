@@ -57,7 +57,7 @@ class PlayerAI(BaseAI):
         
         return new_pos
 
-    def getTrap(self, grid : Grid) -> tuple:
+    def getTrap(self, grid : Grid, weight=[1,1,1]) -> tuple:
         """ 
         YOUR CODE GOES HERE
 
@@ -73,21 +73,22 @@ class PlayerAI(BaseAI):
         """
         
         # TODO: cool edge case to implement
+        opponent_pos = grid.find(3-self.player_num)
+        if len(grid.get_neighbors(opponent_pos, only_available=True)) == 0:
+            return None
 
         # throw to one of the available cells based on heuristics
-        (trap, _) = self.trap_maximize(grid, self.player_num, 0)
+        (trap, _) = self.trap_maximize(grid, self.player_num, 0, inf, -inf, weight)
 
         return trap
     
-    def trap_maximize(self, grid, player, depth) -> tuple:
+    def trap_maximize(self, grid, player, depth, alpha, beta, weight) -> tuple:
         '''
             Find the child state with the highest utility value
 
             This function should return a tuple (maxTrap, maxUtil), where maxTrap is the cell with the highest 
             utility value and maxUtil is the value
         '''
-        # choose heuristics
-        heuristic_func = heuristic_IS
 
         #find position
         opponent_pos = grid.find(3-player)
@@ -95,7 +96,10 @@ class PlayerAI(BaseAI):
 
         # terminal test when the depth limit is reached
         if depth == DEPTH_LIMIT:
-            util = heuristic_func(grid, opponent_pos, player_pos)
+            util = 0
+            util += weight[0] * heuristic_IS(grid, opponent_pos, player_pos)
+            util += weight[1] * heuristic_AIS(grid, opponent_pos, player_pos)
+            util += weight[2] * heuristic_OCLS(grid, opponent_pos, player_pos)
             return (None, util)
         
         (maxTrap, maxUtil) = (None, -inf)
@@ -104,28 +108,33 @@ class PlayerAI(BaseAI):
         for cell in available_cells:
             new_grid = grid.clone()
             new_grid.trap(cell)
-            (_, util) = self.move_minimize(new_grid, 3-player, depth+1)
+            (_, util) = self.move_minimize(new_grid, 3-player, depth+1, alpha, beta, weight)
             if util > maxUtil:
                 maxUtil = util
                 maxTrap = cell
+            if maxUtil >= beta:
+                break
+            if maxUtil > alpha:
+                alpha = maxUtil
         return (maxTrap, maxUtil)
 
-    def move_minimize(self, grid, player, depth) -> tuple:
+    def move_minimize(self, grid, player, depth, alpha, beta, weight) -> tuple:
         '''
                 Find the child state with the lowest utility value
 
                 This function should return a tuple (minMove, minUtil), where minMove is the cell with the lowest
                 utility value and minUtil is the value
         '''
-        # choose heuristics
-        heuristic_func = heuristic_IS
 
         opponent_pos = grid.find(3-player)
         player_pos = grid.find(player)
 
         # terminal test when the depth limit is reached
         if depth == DEPTH_LIMIT:
-            util = heuristic_func(grid, opponent_pos, player_pos)
+            util = 0
+            util += weight[0] * heuristic_IS(grid, opponent_pos, player_pos)
+            util += weight[1] * heuristic_AIS(grid, opponent_pos, player_pos)
+            util += weight[2] * heuristic_OCLS(grid, opponent_pos, player_pos)
             return (None, util)
         
         (minMove, minUtil) = (None, inf)
@@ -134,10 +143,14 @@ class PlayerAI(BaseAI):
         for cell in available_cells:
             new_grid = grid.clone()
             new_grid.move(cell, player)
-            (_, util) = self.trap_maximize(new_grid, 3-player, depth+1)
+            (_, util) = self.trap_maximize(new_grid, 3-player, depth+1, alpha, beta, weight)
             if util < minUtil:
                 minUtil = util
                 minMove = cell
+            if minUtil <= alpha:
+                break
+            if minUtil < beta:
+                beta = minUtil
         return (minMove, minUtil)
 
         
