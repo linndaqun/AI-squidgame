@@ -3,7 +3,9 @@ from Grid import Grid
 from ComputerAI import ComputerAI
 from Displayer import Displayer
 from PlayerAI import PlayerAI
+from test_players.opponent_heuristics import Opponent_heuristics
 from test_players.opponent_minimax import Opponent_minimax
+from test_players.EasyAI import EasyAI
 from Utils import *
 import time
 
@@ -171,7 +173,7 @@ class Game():
                 if self.is_valid_move(self.grid, self.playerAI, move):
                     self.grid.move(move, turn)
                     self.playerAI.setPosition(move)
-                    print(f"Moving to {move}")
+                    # print(f"Moving to {move}")
                 else:
                     self.over = True
                     print(f"Tried to move to : {move}")
@@ -229,15 +231,19 @@ class Game():
 def main():
 
     playerAI = PlayerAI() # change this to PlayerAI() to test your player!
-    computerAI = Opponent_minimax() # change this to a more sophisticated player you've coded
+    computerAI = EasyAI() # change this to a more sophisticated player you've coded
     displayer = Displayer()
-    game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
     
-    result = game.play()
-    if result == 1: 
-        print("Player 1 wins!")
-    elif result == 2:
-        print("Player 1 loses!")
+    win = 0
+    for _ in range(10):
+        game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
+        result = game.play()
+        if result == 1: 
+            print("Player 1 wins!")
+            win += 1
+        elif result == 2:
+            print("Player 1 loses!")
+    print("winning rate:" + str(win/10))
 
 if __name__ == "__main__":
     main()
