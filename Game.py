@@ -3,9 +3,11 @@ from Grid import Grid
 from ComputerAI import ComputerAI
 from Displayer import Displayer
 from PlayerAI import PlayerAI
+from PlayerAI_copy import PlayerAI1
 from test_players.opponent_heuristics import Opponent_heuristics
 from test_players.opponent_minimax import Opponent_minimax
 from test_players.EasyAI import EasyAI
+from test_players.MediumAI import MediumAI
 from Utils import *
 import time
 
@@ -231,11 +233,19 @@ class Game():
 def main():
 
     playerAI = PlayerAI() # change this to PlayerAI() to test your player!
-    computerAI = EasyAI() # change this to a more sophisticated player you've coded
+    computerAI = MediumAI() # change this to a more sophisticated player you've coded
     displayer = Displayer()
-    
+
+    # game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
+    # result = game.play()
+    # if result == 1: 
+    #     print("Player 1 wins!")
+    # elif result == 2:
+    #     print("Player 1 loses!")
+
+    n = 5
     win = 0
-    for _ in range(10):
+    for _ in range(n):
         game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
         result = game.play()
         if result == 1: 
@@ -243,7 +253,7 @@ def main():
             win += 1
         elif result == 2:
             print("Player 1 loses!")
-    print("winning rate:" + str(win/10))
+    print("winning rate: "+str(win/n))
 
 if __name__ == "__main__":
     main()

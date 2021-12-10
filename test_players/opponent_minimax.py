@@ -8,6 +8,7 @@ from BaseAI import BaseAI
 from Grid import Grid
 from Displayer import Displayer
 from test_players.opponent_heuristics import heuristic_IS
+from Utils import *
 
 DEPTH_LIMIT = 5
 
@@ -47,15 +48,15 @@ class Opponent_minimax(BaseAI):
         You may adjust the input variables as you wish (though it is not necessary). Output has to be (x,y) coordinates.
         
         """
-        """ Returns a random, valid move """
-        
-        # find all available moves 
-        available_moves = grid.get_neighbors(self.pos, only_available = True)
+        available_moves = grid.get_neighbors(self.pos, only_available=True)
+        heuristic_scores = []
 
-        # make random move
-        new_pos = random.choice(available_moves) if available_moves else None
-        
-        return new_pos
+        for next_move in available_moves:
+            next_state = grid.clone().move(next_move, self.player_num)
+            heuristic_score = MoveMinimax(next_state, 1, self.player_num, False)
+            heuristic_scores.append(heuristic_score)
+
+        return available_moves[np.argmax(heuristic_scores)]
 
     def getTrap(self, grid : Grid) -> tuple:
         """ 
@@ -96,6 +97,7 @@ class Opponent_minimax(BaseAI):
         # terminal test when the depth limit is reached
         if depth == DEPTH_LIMIT:
             util = heuristic_func(grid, opponent_pos, player_pos)
+            p = 1 - 0.05*(manhattan_distance(player_pos, opponent_pos) - 1)
             return (None, util)
         
         (maxTrap, maxUtil) = (None, -inf)
@@ -160,3 +162,80 @@ def heuristic_OCLS(grid, opponent, player):
     for cell in player_cells:
         player_moves += len(grid.get_neighbors(cell, only_available=True))
     return player_moves - oppo_moves
+
+# The ExpectMinimax algorithm of Move
+# Parameters:
+def MoveMinimax(grid: Grid, cur_depth, player_num, player_turn):
+    if cur_depth == 5 or not grid.get_neighbors(grid.find(player_num), only_available=True):
+        return getHeuristic(grid, player_num)
+    if player_turn:
+        available_moves = grid.get_neighbors(grid.find(player_num), only_available=True)
+        next_states = [grid.clone().move(mv, player_num) for mv in available_moves]
+        heuristic_scores = [MoveMinimax(next_state, cur_depth + 1, player_num, not player_turn) for next_state in next_states]
+        return np.argmax(heuristic_scores)
+    else:
+        available_traps = grid.get_neighbors(grid.find(player_num), only_available=True)
+        next_states = [grid.clone().trap(trap) for trap in available_traps]
+        heuristic_scores = [MoveMinimax(next_state, cur_depth + 1, player_num, not player_turn) for next_state in next_states]
+
+        opponent_pos = grid.find(3 - player_num)
+        # calculates probability of landing at each available cell
+        for index, trap in enumerate(available_traps):
+            manhattan_distance = abs(opponent_pos[0] - trap[0]) + abs(opponent_pos[1] - trap[1])
+            probability = 1 - 0.05 * (manhattan_distance - 1)
+            heuristic_scores[index] *= probability
+
+        return np.argmin(heuristic_scores)
+
+# Heuristic Function: the difference between the current number of moves Player (You) can make
+# and the current number of moves the opponent can make.
+def getHeuristic(grid: Grid, player_num):
+    available_moves = grid.get_neighbors(grid.find(player_num), only_available=True)
+    num_available_moves = len(available_moves)
+
+    opponent_pos = grid.find(3 - player_num)
+    opponent_available_moves = grid.get_neighbors(opponent_pos, only_available=True)
+    opponent_num_available_moves = len(opponent_available_moves)
+
+    return num_available_moves - opponent_num_available_moves
+
+# Given the current player, retrieves all the available traps (available neighboring cells)
+# Returns a list of (trap_pos, probability)
+def getAvailableTraps(grid: Grid, player_num):
+    available_traps = np.empty
+    available_cells = grid.get_neighbors(grid.find(player_num), only_available=True)
+
+    opponent_player_num = 3 - player_num
+    opponent_pos = grid.find(opponent_player_num)
+
+    # opponent will throw the trap at the cell that maximizes his score
+    for trap in available_cells:
+        next_state = grid.clone().trap(trap)
+        heuristic_score = getHeuristic(next_state, opponent_player_num)
+        manhattan_distance = abs(opponent_pos[0] - trap[0]) + abs(opponent_pos[1] - trap[1])
+        probability = 1 - 0.05 * (manhattan_distance - 1)
+
+
+    return available_traps
+
+
+# Returns the state after the opponent selects the optimal cell to trap
+def getOpponentTrap(grid: Grid, player_num):
+    available_cells = grid.get_neighbors(grid.find(player_num), only_available=True)
+    heuristic_scores = []
+
+    opponent_player_num = 3 - player_num
+    opponent_pos = grid.find(opponent_player_num)
+
+    # opponent will throw the trap at the cell that maximizes his score
+    for trap in available_cells:
+        next_state = grid.clone().trap(trap)
+        heuristic_score = getHeuristic(next_state, opponent_player_num)
+        manhattan_distance = abs(opponent_pos[0] - trap[0]) + abs(opponent_pos[1] - trap[1])
+        probability = 1 - 0.05 * (manhattan_distance - 1)
+        heuristic_scores.append(heuristic_score * probability)
+
+    opponent_selected_trap = available_cells[np.argmax(heuristic_scores)]
+    next_state = grid.clone().trap(opponent_selected_trap)
+
+    return next_state
