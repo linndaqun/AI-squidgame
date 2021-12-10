@@ -3,11 +3,9 @@ from Grid import Grid
 from ComputerAI import ComputerAI
 from Displayer import Displayer
 from PlayerAI import PlayerAI
-from PlayerAI_copy import PlayerAI1
-from test_players.opponent_heuristics import Opponent_heuristics
-from test_players.opponent_minimax import Opponent_minimax
 from test_players.EasyAI import EasyAI
 from test_players.MediumAI import MediumAI
+from test_players.OppoMinimax import OppoMinimax
 from Utils import *
 import time
 

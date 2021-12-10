@@ -7,14 +7,13 @@ import os
 from BaseAI import BaseAI
 from Grid import Grid
 from Displayer import Displayer
-from test_players.opponent_heuristics import heuristic_IS
 from Utils import *
 
 DEPTH_LIMIT = 5
 
 # TO BE IMPLEMENTED
 # 
-class Opponent_minimax(BaseAI):
+class OppoMinimax(BaseAI):
 
     def __init__(self) -> None:
         # You may choose to add attributes to your player - up to you!
@@ -48,6 +47,8 @@ class Opponent_minimax(BaseAI):
         You may adjust the input variables as you wish (though it is not necessary). Output has to be (x,y) coordinates.
         
         """
+        """ Moves based on available moves """
+        
         available_moves = grid.get_neighbors(self.pos, only_available=True)
         heuristic_scores = []
 
@@ -58,7 +59,7 @@ class Opponent_minimax(BaseAI):
 
         return available_moves[np.argmax(heuristic_scores)]
 
-    def getTrap(self, grid : Grid) -> tuple:
+    def getTrap(self, grid : Grid, weight=[1,1,1]) -> tuple:
         """ 
         YOUR CODE GOES HERE
 
@@ -73,106 +74,159 @@ class Opponent_minimax(BaseAI):
         
         """
         
-        # TODO: cool edge case to implement
+        '''# TODO: cool edge case to implement
+        opponent_pos = grid.find(3-self.player_num)
+        if len(grid.get_neighbors(opponent_pos, only_available=True)) == 0:
+            return None
 
         # throw to one of the available cells based on heuristics
-        (trap, _) = self.trap_maximize(grid, self.player_num, 0)
+        (trap, _) = self.trap_maximize(grid, self.player_num, 0, inf, -inf, weight)
 
         return trap
-    
-    def trap_maximize(self, grid, player, depth) -> tuple:
         '''
-            Find the child state with the highest utility value
+        # find players
+        opponent = grid.find(3 - self.player_num)
+
+        # find all available cells in the grid
+        available_neighbors = grid.get_neighbors(opponent, only_available = True)
+
+        # edge case - if there are no available cell around opponent, then 
+        # player constitutes last trap and will win. throwing randomly.
+        if not available_neighbors:
+            return random.choice(grid.getAvailableCells())
+
+        # throw to one of the available cells randomly
+        trap = self.trap_minimize(grid, self.player_num, 1, -inf, inf, [1,1,1])
+    
+        return trap[0]
+    
+    def trap_minimize(self, grid, player, depth, alpha, beta, weight) -> tuple:
+        '''
+            Find trap that minimizes opponent's moves
 
             This function should return a tuple (maxTrap, maxUtil), where maxTrap is the cell with the highest 
             utility value and maxUtil is the value
         '''
-        # choose heuristics
-        heuristic_func = heuristic_IS
 
         #find position
         opponent_pos = grid.find(3-player)
-        player_pos = grid.find(player)
 
         # terminal test when the depth limit is reached
         if depth == DEPTH_LIMIT:
-            util = heuristic_func(grid, opponent_pos, player_pos)
-            p = 1 - 0.05*(manhattan_distance(player_pos, opponent_pos) - 1)
-            return (None, util)
+            available_neighbors = grid.get_neighbors(opponent_pos, only_available = True)
+
+            # edge case - if there are no available cell around opponent, then 
+            # player constitutes last trap and will win. throwing randomly.
+            if not available_neighbors:
+                return inf
+            
+            states = [grid.clone().trap(cell) for cell in available_neighbors]
+
+            # find trap that minimizes opponent's moves
+            is_scores = np.array([IS(state, 3 - player) for state in states])
+
+            return (None, np.argmin(is_scores))
         
-        (maxTrap, maxUtil) = (None, -inf)
+        (minTrap, minUtil) = (None, inf)
         # find all available cells surrounding Opponent
         available_cells = grid.get_neighbors(opponent_pos, only_available=True)
         for cell in available_cells:
             new_grid = grid.clone()
             new_grid.trap(cell)
-            (_, util) = self.move_minimize(new_grid, 3-player, depth+1)
-            if util > maxUtil:
-                maxUtil = util
-                maxTrap = cell
-        return (maxTrap, maxUtil)
+            (_, util) = self.move_maximize(new_grid, 3-player, depth+1, alpha, beta, weight)
+            if util < minUtil:
+                minUtil = util
+                minTrap = cell
+        return (minTrap, minUtil)
 
-    def move_minimize(self, grid, player, depth) -> tuple:
+    def move_maximize(self, grid, player, depth, alpha, beta, weight) -> tuple:
         '''
                 Find the child state with the lowest utility value
 
                 This function should return a tuple (minMove, minUtil), where minMove is the cell with the lowest
                 utility value and minUtil is the value
         '''
-        # choose heuristics
-        heuristic_func = heuristic_IS
 
-        opponent_pos = grid.find(3-player)
         player_pos = grid.find(player)
 
         # terminal test when the depth limit is reached
         if depth == DEPTH_LIMIT:
-            util = heuristic_func(grid, opponent_pos, player_pos)
-            return (None, util)
+            available_moves = grid.get_neighbors(player_pos, only_available = True)
+
+            states = [grid.clone().move(mv, player) for mv in available_moves]
+
+            # find move with best IS score
+            am_scores = np.array([getHeuristic(state, player) for state in states])
         
-        (minMove, minUtil) = (None, inf)
+            return (None, np.argmax(am_scores))
+        
+        (maxMove, maxUtil) = (None, -inf)
         # find all available cells surrounding Opponent
         available_cells = grid.get_neighbors(player_pos, only_available=True)
         for cell in available_cells:
             new_grid = grid.clone()
             new_grid.move(cell, player)
-            (_, util) = self.trap_maximize(new_grid, 3-player, depth+1)
-            if util < minUtil:
-                minUtil = util
-                minMove = cell
-        return (minMove, minUtil)
+            (_, util) = self.trap_minimize(new_grid, 3-player, depth+1, alpha, beta, weight)
+            if util > maxUtil:
+                maxUtil = util
+                maxMove = cell
+        return (maxMove, maxUtil)
 
         
-def heuristic_IS(grid, opponent, player):
-    oppo_cells = grid.get_neighbors(opponent, only_available=True)
-    player_cells = grid.get_neighbors(player, only_available=True)
-    return len(player_cells) - len(oppo_cells)
+def IS(grid : Grid, player_num):
 
-def heuristic_AIS(grid, opponent, player):
-    oppo_cells = grid.get_neighbors(opponent, only_available=True)
-    player_cells = grid.get_neighbors(player, only_available=True)
-    return len(player_cells) - 0.5 * len(oppo_cells)
+    # find all available moves by Player
+    player_moves    = grid.get_neighbors(grid.find(player_num), only_available = True)
+    
+    # find all available moves by Opponent
+    opp_moves       = grid.get_neighbors(grid.find(3 - player_num), only_available = True)
+    
+    return len(player_moves) - len(opp_moves)
 
-def heuristic_OCLS(grid, opponent, player):
+def AIS(grid : Grid, player_num):
+
+    # find all available moves by Player
+    player_moves    = grid.get_neighbors(grid.find(player_num), only_available = True)
+    
+    # find all available moves by Opponent
+    opp_moves       = grid.get_neighbors(grid.find(3 - player_num), only_available = True)
+    
+    return len(player_moves) - 2*len(opp_moves)
+
+def DIS(grid : Grid, player_num):
+
+    # find all available moves by Player
+    player_moves    = grid.get_neighbors(grid.find(player_num), only_available = True)
+    
+    # find all available moves by Opponent
+    opp_moves       = grid.get_neighbors(grid.find(3 - player_num), only_available = True)
+    
+    return 2*len(player_moves) - len(opp_moves)
+
+def OCLS(grid, player_num):
     oppo_moves, player_moves = 0, 0
-    oppo_cells = grid.get_neighbors(opponent, only_available=True)
-    for cell in oppo_cells:
+
+    for cell in grid.get_neighbors(grid.find(3-player_num), only_available=True):
         oppo_moves += len(grid.get_neighbors(cell, only_available=True))
-    player_cells = grid.get_neighbors(player, only_available=True)
-    for cell in player_cells:
+
+    for cell in grid.get_neighbors(grid.find(player_num), only_available=True):
         player_moves += len(grid.get_neighbors(cell, only_available=True))
+        
     return player_moves - oppo_moves
 
 # The ExpectMinimax algorithm of Move
-# Parameters:
+# Depth-limit is 5
+# Player --Move--> Opponent(1) --Trap--> Player(2) --Move--> Opponent(3) --Trap--> Player(4) -- Opponent(5)
 def MoveMinimax(grid: Grid, cur_depth, player_num, player_turn):
-    if cur_depth == 5 or not grid.get_neighbors(grid.find(player_num), only_available=True):
+    if not grid.get_neighbors(grid.find(player_num), only_available=True):
+        return -inf
+    if cur_depth == 5:
         return getHeuristic(grid, player_num)
     if player_turn:
         available_moves = grid.get_neighbors(grid.find(player_num), only_available=True)
         next_states = [grid.clone().move(mv, player_num) for mv in available_moves]
         heuristic_scores = [MoveMinimax(next_state, cur_depth + 1, player_num, not player_turn) for next_state in next_states]
-        return np.argmax(heuristic_scores)
+        return max(heuristic_scores)
     else:
         available_traps = grid.get_neighbors(grid.find(player_num), only_available=True)
         next_states = [grid.clone().trap(trap) for trap in available_traps]
@@ -185,7 +239,7 @@ def MoveMinimax(grid: Grid, cur_depth, player_num, player_turn):
             probability = 1 - 0.05 * (manhattan_distance - 1)
             heuristic_scores[index] *= probability
 
-        return np.argmin(heuristic_scores)
+        return min(heuristic_scores)
 
 # Heuristic Function: the difference between the current number of moves Player (You) can make
 # and the current number of moves the opponent can make.
@@ -239,3 +293,16 @@ def getOpponentTrap(grid: Grid, player_num):
     next_state = grid.clone().trap(opponent_selected_trap)
 
     return next_state
+
+
+'''
+    if my opponent is in a square, cannot escape, player needs to run as much as possible, try to stay alive
+    have multiple utilities functions for moving and trapping
+    take current situation into account:
+        winning
+            be more aggressive: higher weight on opponent 
+        losing
+            higher weight on player
+    how far I am into the game: offensive to defensive
+    can double trap
+'''
