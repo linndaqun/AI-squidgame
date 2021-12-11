@@ -6,6 +6,7 @@ from PlayerAI import PlayerAI
 from test_players.EasyAI import EasyAI
 from test_players.MediumAI import MediumAI
 from test_players.OppoMinimax import OppoMinimax
+from test_players.AdvanceAI import AdvanceAI
 from Utils import *
 import time
 
@@ -234,24 +235,24 @@ def main():
     computerAI = MediumAI() # change this to a more sophisticated player you've coded
     displayer = Displayer()
 
-    # game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
-    # result = game.play()
-    # if result == 1: 
-    #     print("Player 1 wins!")
-    # elif result == 2:
-    #     print("Player 1 loses!")
+    game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
+    result = game.play()
+    if result == 1: 
+        print("Player 1 wins!")
+    elif result == 2:
+        print("Player 1 loses!")
 
-    n = 5
-    win = 0
-    for _ in range(n):
-        game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
-        result = game.play()
-        if result == 1: 
-            print("Player 1 wins!")
-            win += 1
-        elif result == 2:
-            print("Player 1 loses!")
-    print("winning rate: "+str(win/n))
+    # n = 10
+    # win = 0
+    # for _ in range(n):
+    #     game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
+    #     result = game.play()
+    #     if result == 1: 
+    #         print("Player 1 wins!")
+    #         win += 1
+    #     elif result == 2:
+    #         print("Player 1 loses!")
+    # print("winning rate: "+str(win/n))
 
 if __name__ == "__main__":
     main()
