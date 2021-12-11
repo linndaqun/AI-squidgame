@@ -13,7 +13,7 @@ DEPTH_LIMIT = 5
 
 # TO BE IMPLEMENTED
 # 
-class PlayerAI(BaseAI):
+class AdvanceAI(BaseAI):
 
     def __init__(self) -> None:
         # You may choose to add attributes to your player - up to you!
@@ -106,7 +106,6 @@ class PlayerAI(BaseAI):
 
         #find position
         opponent_pos = grid.find(3-player)
-        player_pos = grid.find(player)
 
         # terminal test when the depth limit is reached
         if depth == DEPTH_LIMIT:
@@ -120,8 +119,7 @@ class PlayerAI(BaseAI):
             states = [grid.clone().trap(cell) for cell in available_neighbors]
 
             # find trap that minimizes opponent's moves
-            prob = np.array([1 - 0.05*(manhattan_distance(player_pos, cell) - 1) for cell in available_neighbors])
-            is_scores = np.array([calUtil(states[i], 3 - player)*prob[i] for i in range(len(states))])
+            is_scores = np.array([calUtil(state, 3 - player) for state in states])
 
             return (None, np.argmin(is_scores))
         
