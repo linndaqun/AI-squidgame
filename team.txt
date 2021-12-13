@@ -1,3 +1,3 @@
 team name: CL
-team member 1: Chloe Li, yl4690
-team member 2: Linda Li, zl3143
+team member 1: Chloe Li, yl4690, implemented getMove()
+team member 2: Linda Li, zl3143, implemented getTrap()
