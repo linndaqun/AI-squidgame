@@ -4,13 +4,10 @@ from ComputerAI import ComputerAI
 from Displayer import Displayer
 from PlayerAI import PlayerAI
 from test_players.EasyAI import EasyAI
-from test_players.MediumAI import MediumAI
-from test_players.OppoMinimax import OppoMinimax
-from test_players.AdvanceAI import AdvanceAI
 from Utils import *
 import time
 
-# from test_players.MediumAI import MediumAI
+from test_players.MediumAI import MediumAI
 
 PLAYER_TURN, COMPUTER_TURN = 1,2
 
@@ -174,7 +171,7 @@ class Game():
                 if self.is_valid_move(self.grid, self.playerAI, move):
                     self.grid.move(move, turn)
                     self.playerAI.setPosition(move)
-                    # print(f"Moving to {move}")
+                    print(f"Moving to {move}")
                 else:
                     self.over = True
                     print(f"Tried to move to : {move}")
@@ -189,7 +186,7 @@ class Game():
 
                 else: 
                     self.over = True
-                    print(f"Tried to put trap in {intended_trap}") ## change trap to intended_trap
+                    print(f"Tried to put trap in {intended_trap}")
                     print("Invalid trap!")
 
             else:
@@ -232,27 +229,15 @@ class Game():
 def main():
 
     playerAI = PlayerAI() # change this to PlayerAI() to test your player!
-    computerAI = MediumAI() # change this to a more sophisticated player you've coded
+    computerAI = EasyAI() # change this to a more sophisticated player you've coded
     displayer = Displayer()
-
     game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
+    
     result = game.play()
     if result == 1: 
         print("Player 1 wins!")
     elif result == 2:
         print("Player 1 loses!")
-
-    # n = 10
-    # win = 0
-    # for _ in range(n):
-    #     game = Game(playerAI = playerAI, computerAI = computerAI, N = 7, displayer=displayer)
-    #     result = game.play()
-    #     if result == 1: 
-    #         print("Player 1 wins!")
-    #         win += 1
-    #     elif result == 2:
-    #         print("Player 1 loses!")
-    # print("winning rate: "+str(win/n))
 
 if __name__ == "__main__":
     main()
